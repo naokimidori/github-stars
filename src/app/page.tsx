@@ -1,28 +1,31 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import type { Repository } from './components/types';
+import RepoDetailPanel from './components/RepoDetailPanel';
 
-interface Repository {
-  name: string;
-  owner: string;
-  fullName: string;
-  description: string;
-  url: string;
-  language: string;
-  stars: number;
-  starredAt: string;
-}
+const LANG_COLORS: Record<string, string> = {
+  TypeScript: '#3178c6',
+  JavaScript: '#f7df1e',
+  Python: '#3572A5',
+  Go: '#00ADD8',
+  Rust: '#dea584',
+  Java: '#b07219',
+  'C++': '#f34b7d',
+  C: '#555555',
+  Ruby: '#701516',
+  Swift: '#F05138',
+  Kotlin: '#A97BFF',
+  PHP: '#4F5D95',
+  Vue: '#41b883',
+  CSS: '#563d7c',
+  HTML: '#e34c26',
+  Shell: '#89e051',
+  Default: '#8b949e',
+};
 
-interface StarredRepo {
-  nameWithOwner: string;
-  description: string;
-  url: string;
-  primaryLanguage: { name: string } | null;
-  stargazerCount: number;
-}
-
-interface StarEdge {
-  starredAt: string;
+function getLangColor(lang: string): string {
+  return LANG_COLORS[lang] || LANG_COLORS.Default;
 }
 
 export default function GitHubStars() {
@@ -31,6 +34,7 @@ export default function GitHubStars() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [langFilter, setLangFilter] = useState('');
+  const [selectedRepo, setSelectedRepo] = useState<Repository | null>(null);
 
   useEffect(() => {
     fetch('/api/github-stars')
@@ -62,7 +66,7 @@ export default function GitHubStars() {
     return (
       <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
         <div className="text-center">
-          <div className="text-4xl mb-4">⭐</div>
+          <div className="w-8 h-8 border-2 border-zinc-600 border-t-white rounded-full animate-spin mx-auto mb-4" />
           <div className="text-zinc-400">加载中...</div>
         </div>
       </div>
@@ -80,11 +84,14 @@ export default function GitHubStars() {
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
       {/* Header */}
-      <header className="border-b border-zinc-800 bg-zinc-900/80 backdrop-blur sticky top-0 z-10">
+      <header className="border-b border-zinc-800/80 bg-zinc-900/80 backdrop-blur-xl sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-2xl font-bold text-white">⭐ My GitHub Stars</h1>
+              <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+                <span>⭐</span>
+                <span>GitHub Stars</span>
+              </h1>
               <p className="text-zinc-400 text-sm mt-1">
                 {repos.length} 个收藏仓库
               </p>
@@ -94,9 +101,10 @@ export default function GitHubStars() {
                 href="https://github.com/naokimidori"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-zinc-400 hover:text-white transition-colors text-sm"
+                className="text-zinc-400 hover:text-white transition-colors text-sm flex items-center gap-1"
               >
-                @naokimidori ↗
+                @naokimidori
+                <span className="text-zinc-600">↗</span>
               </a>
               <a
                 href="/logout"
@@ -109,17 +117,20 @@ export default function GitHubStars() {
 
           {/* Filters */}
           <div className="flex gap-3 flex-wrap">
-            <input
-              type="text"
-              placeholder="搜索仓库..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500 w-64"
-            />
+            <div className="relative flex-1 max-w-md">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500">🔍</span>
+              <input
+                type="text"
+                placeholder="搜索仓库..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full bg-zinc-800/80 border border-zinc-700/50 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500 transition-colors"
+              />
+            </div>
             <select
               value={langFilter}
               onChange={(e) => setLangFilter(e.target.value)}
-              className="bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
+              className="bg-zinc-800/80 border border-zinc-700/50 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-500 transition-colors cursor-pointer"
             >
               <option value="">全部语言</option>
               {languages.map((l) => (
@@ -135,40 +146,62 @@ export default function GitHubStars() {
       {/* Grid */}
       <main className="max-w-7xl mx-auto px-6 py-8">
         {filtered.length === 0 ? (
-          <div className="text-center text-zinc-500 py-20">没有找到匹配的仓库</div>
+          <div className="text-center text-zinc-500 py-20 text-lg">没有找到匹配的仓库</div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {filtered.map((repo) => (
-              <a
+              <button
                 key={repo.fullName}
-                href={repo.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 hover:border-zinc-700 hover:bg-zinc-900/80 transition-all group block"
+                onClick={() => setSelectedRepo(repo)}
+                className="bg-zinc-900/80 border border-zinc-800/80 rounded-xl p-5 hover:border-zinc-700 hover:bg-zinc-900 transition-all group text-left block w-full"
               >
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-semibold text-white group-hover:text-blue-400 transition-colors truncate pr-2">
-                    {repo.name}
-                  </h3>
-                  <span className="text-yellow-400 text-sm shrink-0">★ {repo.stars.toLocaleString()}</span>
+                <div className="flex items-start gap-3 mb-3">
+                  <span
+                    className="w-3 h-3 rounded-full mt-1.5 shrink-0"
+                    style={{ backgroundColor: getLangColor(repo.language) }}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="font-semibold text-white group-hover:text-blue-400 transition-colors truncate">
+                        {repo.name}
+                      </h3>
+                      <span className="text-yellow-400 text-sm shrink-0 flex items-center gap-1">
+                        ★ {repo.stars >= 1000 ? `${(repo.stars / 1000).toFixed(1)}k` : repo.stars}
+                      </span>
+                    </div>
+                    <p className="text-zinc-600 text-xs mt-0.5">{repo.owner}</p>
+                  </div>
                 </div>
-                <p className="text-zinc-500 text-xs mb-3">{repo.owner}</p>
+
                 <p className="text-zinc-400 text-sm leading-relaxed mb-4 line-clamp-2">
                   {repo.description || '暂无描述'}
                 </p>
+
                 <div className="flex items-center justify-between">
-                  <span className="bg-zinc-800 text-zinc-300 text-xs px-2 py-1 rounded">
+                  <span className="bg-zinc-800 text-zinc-300 text-xs px-2 py-1 rounded flex items-center gap-1.5">
+                    <span
+                      className="w-2 h-2 rounded-full"
+                      style={{ backgroundColor: getLangColor(repo.language) }}
+                    />
                     {repo.language}
                   </span>
                   <span className="text-zinc-600 text-xs">
                     {new Date(repo.starredAt).toLocaleDateString('zh-CN')}
                   </span>
                 </div>
-              </a>
+              </button>
             ))}
           </div>
         )}
       </main>
+
+      {/* Detail Panel */}
+      {selectedRepo && (
+        <RepoDetailPanel
+          repo={selectedRepo}
+          onClose={() => setSelectedRepo(null)}
+        />
+      )}
     </div>
   );
 }
