@@ -89,14 +89,22 @@ export default function GitHubStars() {
                 {repos.length} 个收藏仓库
               </p>
             </div>
-            <a
-              href="https://github.com/naokimidori"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-zinc-400 hover:text-white transition-colors text-sm"
-            >
-              @naokimidori ↗
-            </a>
+            <div className="flex items-center gap-4">
+              <a
+                href="https://github.com/naokimidori"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-zinc-400 hover:text-white transition-colors text-sm"
+              >
+                @naokimidori ↗
+              </a>
+              <a
+                href="/logout"
+                className="text-zinc-500 hover:text-zinc-300 transition-colors text-sm"
+              >
+                退出
+              </a>
+            </div>
           </div>
 
           {/* Filters */}
